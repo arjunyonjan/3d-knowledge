@@ -123,18 +123,15 @@ export default function App() {
       />
       <CodePanel step={tourStep} visible={isTour} />
       <StepCounter current={isTour ? tourStep : -1} onSelect={isTour ? (i) => { setTourStep(i); if (window.__goToStep) window.__goToStep(i) } : undefined} />
-      <SubtitleBar text={subtitleText} visible={showSubtitle} />
       {isTour && (
         <>
           <div className="nav-btn prev-btn" onClick={() => {
             if (autoTimer.current) { clearTimeout(autoTimer.current); autoTimer.current = null }
-            if (subtitleTimer.current) { clearTimeout(subtitleTimer.current); subtitleTimer.current = null }
             const i = Math.max(0, tourStep - 1)
             setTourStep(i); if (window.__goToStep) window.__goToStep(i)
           }}>&#8249;</div>
           <div className="nav-btn next-btn" onClick={() => {
             if (autoTimer.current) { clearTimeout(autoTimer.current); autoTimer.current = null }
-            if (subtitleTimer.current) { clearTimeout(subtitleTimer.current); subtitleTimer.current = null }
             const i = Math.min(topics.length - 1, tourStep + 1)
             setTourStep(i); if (window.__goToStep) window.__goToStep(i)
           }}>&#8250;</div>
