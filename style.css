@@ -167,37 +167,6 @@ canvas { display: block; }
   transition: opacity 0.8s ease;
 }
 
-/* ── Start Button ── */
-#start-btn {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 50;
-  padding: 16px 40px;
-  border: 2px solid var(--primary);
-  border-radius: 12px;
-  background: rgba(0, 255, 170, 0.12);
-  color: var(--primary);
-  font-family: 'SF Mono', 'Fira Code', monospace;
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 0 40px rgba(0, 255, 170, 0.15);
-}
-#start-btn:hover {
-  background: rgba(0, 255, 170, 0.2);
-  box-shadow: 0 0 60px rgba(0, 255, 170, 0.25);
-}
-#start-btn.hidden {
-  opacity: 0;
-  transform: translate(-50%, -50%) scale(0.9);
-  pointer-events: none;
-}
-
 .nav-btn {
   position: fixed;
   top: 50%;
@@ -225,61 +194,67 @@ canvas { display: block; }
 .prev-btn { left: 12px; }
 .next-btn { right: 12px; }
 
-/* ── Mode Selector ── */
-.mode-selector {
+/* ── Toolbar ── */
+#toolbar {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 25;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 12px;
+  padding: 8px 18px;
+  border-radius: 10px;
+  background: rgba(3,7,18,0.88);
+  border: 1px solid rgba(0,255,170,0.1);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+  backdrop-filter: blur(6px);
+  pointer-events: auto;
+  white-space: nowrap;
 }
-.mode-group { display: flex; gap: 2px; }
-.mode-chip {
-  padding: 2px 8px;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  border-radius: 4px;
-  cursor: pointer;
-  user-select: none;
-  color: #6b7280;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid transparent;
+.tb-section { display: flex; align-items: center; gap: 4px; }
+.tb-config { cursor: pointer; gap: 6px; padding: 2px 8px; border-radius: 4px; transition: background 0.2s ease; }
+.tb-config:hover { background: rgba(0,255,170,0.08); }
+.tb-label { color: #9ca3af; font-size: 10px; font-weight: 600; letter-spacing: 0.06em; }
+.tb-chip {
+  padding: 2px 7px; font-size: 10px; font-weight: 600; letter-spacing: 0.05em;
+  border-radius: 4px; cursor: pointer; user-select: none;
+  color: #6b7280; background: rgba(255,255,255,0.03); border: 1px solid transparent;
   transition: all 0.2s ease;
 }
-.mode-chip:hover { color: #d1d5db; background: rgba(255,255,255,0.06); }
-.mode-chip.active {
-  color: var(--primary);
-  border-color: rgba(0,255,170,0.3);
-  background: rgba(0,255,170,0.08);
+.tb-chip:hover { color: #d1d5db; background: rgba(255,255,255,0.06); }
+.tb-chip.active { color: var(--primary); border-color: rgba(0,255,170,0.3); background: rgba(0,255,170,0.08); }
+.tb-divider { width: 1px; height: 18px; background: rgba(255,255,255,0.06); }
+.tb-start {
+  padding: 4px 14px; border-radius: 6px; cursor: pointer; user-select: none;
+  font-family: 'SF Mono', 'Fira Code', monospace; font-size: 11px; font-weight: 700;
+  letter-spacing: 0.08em; border: 1px solid var(--primary);
+  color: var(--primary); background: rgba(0,255,170,0.1);
+  transition: all 0.25s ease;
 }
-.mode-chip.disabled { opacity: 0.4; pointer-events: none; }
-.mode-divider {
-  width: 1px;
-  height: 14px;
-  background: rgba(255,255,255,0.08);
-  margin: 0 6px;
-}
-.header-sep { width: 1px; height: 16px; background: rgba(255,255,255,0.06); margin: 0 8px; }
-.gear-icon { cursor: pointer; transition: all 0.25s ease; margin-left: 4px; }
-.gear-icon:hover { color: var(--primary); }
+.tb-start:hover { background: rgba(0,255,170,0.2); box-shadow: 0 0 20px rgba(0,255,170,0.15); }
 
 /* ── Api Panel ── */
 #api-panel {
   position: fixed;
-  top: 80px;
+  bottom: 155px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 5;
   width: 620px;
   max-width: 92vw;
+  max-height: calc(100vh - 280px);
+  overflow-y: auto;
   background: rgba(3,7,18,0.95);
   border: 1px solid rgba(0,255,170,0.15);
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 12px 48px rgba(0,0,0,0.6);
-  animation: panelIn 0.3s ease;
+  animation: panelUp 0.3s ease;
 }
-@keyframes panelIn {
-  from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+@keyframes panelUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
   to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 .api-header {

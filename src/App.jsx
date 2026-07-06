@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'preact/hooks'
 import ThreeCanvas from './components/ThreeCanvas.jsx'
 import Header from './components/Header.jsx'
 import CodePanel from './components/CodePanel.jsx'
-import StartButton from './components/StartButton.jsx'
+import Toolbar from './components/Toolbar.jsx'
 import StepCounter from './components/StepCounter.jsx'
 import ApiPanel from './components/ApiPanel.jsx'
 import { speak, stopSpeech } from './utils/tts.js'
@@ -84,6 +84,12 @@ export default function App() {
     }
   }
 
+  const handleStart = () => {
+    setShowStart(false)
+    setTourStep(0)
+    if (window.__startTour) window.__startTour()
+  }
+
   return (
     <>
       <ThreeCanvas
@@ -93,14 +99,7 @@ export default function App() {
         edges={edges}
         speed={speed}
       />
-      <Header
-        speed={speed}
-        level={level}
-        onSpeedChange={setSpeed}
-        onLevelChange={handleLevelChange}
-        onSettingsClick={() => setShowSettings(!showSettings)}
-        showSettings={showSettings}
-      />
+      <Header />
       <ApiPanel
         visible={showSettings}
         onClose={() => setShowSettings(false)}
@@ -113,13 +112,14 @@ export default function App() {
         domain={currentDomain}
         onDomainChange={setCurrentDomain}
       />
-      <StartButton
-        visible={showStart}
-        onClick={() => {
-          setShowStart(false)
-          setTourStep(0)
-          if (window.__startTour) window.__startTour()
-        }}
+      <Toolbar
+        speed={speed}
+        level={level}
+        onSpeedChange={setSpeed}
+        onLevelChange={handleLevelChange}
+        onSettingsClick={() => setShowSettings(!showSettings)}
+        showStart={showStart}
+        onStartClick={handleStart}
       />
       <CodePanel step={tourStep} visible={isTour} />
       <StepCounter current={isTour ? tourStep : -1} onSelect={isTour ? (i) => { setTourStep(i); if (window.__goToStep) window.__goToStep(i) } : undefined} />
