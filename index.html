@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Week 6 — Sequence Models & Attention</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div id="app"></div>
+  <div id="loader">
+    <div class="loader-ring"></div>
+    <div class="loader-text">SYS::WEEK06</div>
+  </div>
+  <script type="module" src="/src/main.jsx"></script>
+  <script>
+    window.onerror = function(msg) {
+      const el = document.getElementById('loader')
+      if (el) el.innerHTML = '<div class="loader-text" style="color:#ef4444">ERR: ' + msg + '</div>'
+    }
+  </script>
+</body>
+</html>
