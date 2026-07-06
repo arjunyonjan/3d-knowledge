@@ -6,6 +6,9 @@ export default class Card3D {
     this.topic = topic
     this.index = index
     this.expanded = false
+    this.faceCamera = false
+    this.dimmed = false
+    this.targetDim = false
     this.entered = false
     this.enterProgress = 0
     this.startDelay = index * 0.12
@@ -113,11 +116,17 @@ export default class Card3D {
 
   setExpanded(expanded) {
     this.expanded = expanded
+    this.faceCamera = expanded
     const color = CARD_COLORS[this.index] || COLORS.primary
     this.card.material.color.set(expanded ? color : 0x0a0e1a)
+    if (!expanded) this.setDimmed(false)
   }
 
-  update() {
+  setDimmed(val) {
+    this.targetDim = val
+  }
+
+  update(camQuat) {
     this.time += 0.016
     if (this.startTimer < this.startDelay) { this.startTimer += 0.016; return }
     if (!this.entered) {
@@ -125,13 +134,26 @@ export default class Card3D {
       this.group.position.copy(this.targetPos.clone().multiplyScalar(1 - Math.pow(1 - this.enterProgress, 3)))
       if (this.enterProgress >= 1) this.entered = true
     }
+
+    if (this.faceCamera && camQuat) {
+      this.group.quaternion.slerp(camQuat, 0.1)
+    } else if (!this.faceCamera) {
+      this.group.quaternion.slerp(new THREE.Quaternion(), 0.08)
+    }
+
+    const target = this.targetDim ? 0.3 : 1
+    this.dimmed += (target - this.dimmed) * 0.08
+    this.card.material.opacity = 0.92 * this.dimmed
+    this.label.material.opacity = 0.9 * this.dimmed
+    this.edgeMat.opacity = 0.25 * this.dimmed
+    this.stepNum.material.opacity = 0.4 * this.dimmed
+
     const pulse = 0.5 + Math.sin(this.time * 2) * 0.5
     if (this.expanded) {
       this.glow.material.opacity = 0.15 + pulse * 0.15
-      this.edgeMat.opacity = 0.5 + pulse * 0.3
+      this.edgeMat.opacity = Math.max(this.edgeMat.opacity, 0.5 + pulse * 0.3)
     } else {
       this.glow.material.opacity = 0
-      this.edgeMat.opacity = 0.25
     }
   }
 }

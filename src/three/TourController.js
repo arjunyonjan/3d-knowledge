@@ -35,11 +35,16 @@ export default class TourController {
     this.timer = 0
     this.tm.deselectAll()
     this.tm.cards[idx].setExpanded(true)
+    this.tm.cards.forEach((c, i) => { if (i !== idx) c.setDimmed(true) })
     if (this.onStepChange) this.onStepChange(idx)
   }
 
-  next() { if (this.active && this.step < this.tm.cards.length - 1) this._go(this.step + 1) }
-  prev() { if (this.active && this.step > 0) this._go(this.step - 1) }
+  next() { if (this.active && this.step < this.tm.cards.length - 1) { this._go(this.step + 1); this.timer = 0 } }
+  prev() { if (this.active && this.step > 0) { this._go(this.step - 1); this.timer = 0 } }
+
+  getProgress() {
+    return { elapsed: this.timer, delay: this.delay, ratio: Math.min(this.timer / this.delay, 1) }
+  }
 
   update(dt) {
     if (!this.active) return

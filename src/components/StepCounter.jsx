@@ -5,7 +5,7 @@ export default function StepCounter({ current, onSelect }) {
   const isTour = current >= 0
   return (
     <div style={{
-      position:'fixed', bottom:16, left:0, right:0, display:'flex', justifyContent:'center', gap:14, zIndex:12, pointerEvents:'none', padding:'8px 0',
+      position:'fixed', bottom:16, left:0, right:0, display:'none', justifyContent:'center', gap:14, zIndex:12, pointerEvents:'none', padding:'8px 0',
       opacity: isTour ? 1 : 0.15, transition:'opacity 0.4s'
     }}>
       {TOPICS.map((t, i) => {

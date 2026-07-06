@@ -1,16 +1,30 @@
 import { useState, useEffect, useRef } from 'preact/hooks'
 import ThreeCanvas from './components/ThreeCanvas.jsx'
 import Header from './components/Header.jsx'
-import CodePanel from './components/CodePanel.jsx'
+import NodePanel from './components/NodePanel.jsx'
 import Toolbar from './components/Toolbar.jsx'
 import StepCounter from './components/StepCounter.jsx'
 import ApiPanel from './components/ApiPanel.jsx'
+import TimerDisplay from './components/TimerDisplay.jsx'
+import RandomGenButton from './components/RandomGenButton.jsx'
+import KnowledgeButton from './components/KnowledgeButton.jsx'
 import { speak, stopSpeech } from './utils/tts.js'
 import { TOPICS as DEFAULT_TOPICS } from './data/theme.js'
 import { treePositions as DEFAULT_POSITIONS, treeEdges as DEFAULT_EDGES } from './data/tree.js'
 import { computeTreePositions } from './utils/treeLayout.js'
 import { cacheGet, cacheSet } from './utils/cache.js'
 import { generateFromDomain } from './utils/deepseek.js'
+
+const RANDOM_SEEDS = [
+  'business', 'travel', 'philosophy', 'science',
+  'fashion', 'entertainment', 'technology', 'psychology',
+  'history', 'art', 'music', 'medicine',
+  'architecture', 'sports', 'food', 'finance'
+]
+
+function pickRandom() {
+  return RANDOM_SEEDS[Math.floor(Math.random() * RANDOM_SEEDS.length)]
+}
 
 export default function App() {
   const [tourStep, setTourStep] = useState(-1)
@@ -24,12 +38,35 @@ export default function App() {
   const [positions, setPositions] = useState(DEFAULT_POSITIONS)
   const [edges, setEdges] = useState(DEFAULT_EDGES)
 
-  const [apiKey, setApiKey] = useState(() => import.meta.env.VITE_DEEPSEEK_KEY || localStorage.getItem('w06_api_key') || '')
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState('')
   const [currentDomain, setCurrentDomain] = useState('')
+  const [timerProgress, setTimerProgress] = useState(null)
+  const [streamContent, setStreamContent] = useState('')
+  const [showStream, setShowStream] = useState(false)
 
   const autoTimer = useRef(null)
+  const fsAttempted = useRef(false)
+
+  // Auto fullscreen on first user interaction
+  useEffect(() => {
+    const go = () => {
+      if (fsAttempted.current) return
+      fsAttempted.current = true
+      document.removeEventListener('click', go)
+      document.removeEventListener('touchstart', go)
+      // Delay slightly so browser registers the gesture
+      setTimeout(() => {
+        try { document.documentElement.requestFullscreen() } catch (e) {
+          // Try alternative: request from a child element
+          try { document.getElementById('three-container')?.requestFullscreen() } catch {}
+        }
+      }, 100)
+    }
+    document.addEventListener('click', go, { once: true })
+    document.addEventListener('touchstart', go, { once: true })
+    return () => { document.removeEventListener('click', go); document.removeEventListener('touchstart', go) }
+  }, [])
 
   const isTour = tourStep >= 0
 
@@ -53,6 +90,8 @@ export default function App() {
 
   const handleGenerate = async (domain) => {
     setCurrentDomain(domain)
+    setStreamContent('')
+    setShowStream(true)
     const cached = cacheGet(domain, level)
     if (cached) {
       setTopics(cached.topics)
@@ -61,8 +100,7 @@ export default function App() {
       setShowSettings(false)
       return
     }
-    const data = await generateFromDomain(domain, level, apiKey)
-    if (!apiKey) localStorage.setItem('w06_api_key', apiKey)
+    const data = await generateFromDomain(domain, level, null, (t) => setStreamContent(t))
     cacheSet(domain, level, { topics: data.topics, edges: data.edges })
     setTopics(data.topics)
     setEdges(data.edges)
@@ -90,6 +128,17 @@ export default function App() {
     if (window.__startTour) window.__startTour()
   }
 
+  const handleRandomGenerate = async () => {
+    const seed = pickRandom()
+    setCurrentDomain(seed)
+    setGenerating(true)
+    try {
+      await handleGenerate(seed)
+    } finally {
+      setGenerating(false)
+    }
+  }
+
   return (
     <>
       <ThreeCanvas
@@ -98,14 +147,16 @@ export default function App() {
         positions={positions}
         edges={edges}
         speed={speed}
+        onTimerTick={(p) => setTimerProgress(p)}
       />
       <Header />
+      <KnowledgeButton domain={currentDomain} onClick={() => setShowSettings(!showSettings)} />
+      <RandomGenButton onClick={handleRandomGenerate} />
+      <TimerDisplay progress={!isTour ? timerProgress : null} />
       <ApiPanel
         visible={showSettings}
         onClose={() => setShowSettings(false)}
         onGenerate={handleGenerate}
-        apiKey={apiKey}
-        setApiKey={setApiKey}
         generating={generating}
         setGenerating={setGenerating}
         setError={setError}
@@ -121,7 +172,8 @@ export default function App() {
         showStart={showStart}
         onStartClick={handleStart}
       />
-      <CodePanel step={tourStep} visible={isTour} />
+      <NodePanel step={tourStep} topics={topics} visible={isTour}
+        onClose={() => setTourStep(-1)} timerProgress={timerProgress} />
       <StepCounter current={isTour ? tourStep : -1} onSelect={isTour ? (i) => { setTourStep(i); if (window.__goToStep) window.__goToStep(i) } : undefined} />
       {isTour && (
         <>
@@ -140,13 +192,20 @@ export default function App() {
       {error && (
         <div id="error-toast" onClick={() => setError('')}>{error}</div>
       )}
-      <div id="hint" style={{
-        position:'fixed', bottom:40, left:0, right:0, margin:'0 auto', width:'fit-content',
-        color:'#4b5563', fontSize:12, zIndex:10, opacity: isTour ? 0 : 0.6,
-        transition:'opacity 0.3s', pointerEvents:'none', userSelect:'none'
-      }}>
-        Click a card to explore · Scroll to zoom · Drag to orbit
-      </div>
+      {(generating || streamContent) && (
+        <div id="stream-panel" class={showStream ? 'expanded' : ''}>
+          <div id="stream-bar" onClick={() => setShowStream(!showStream)}>
+            <span class="stream-status">
+              {generating ? <span class="stream-dot" /> : <span class="stream-done">✓</span>}
+              {generating ? 'Generating...' : 'Done'}
+            </span>
+            <span class="stream-toggle">{showStream ? '▾ Hide' : '▸ Show'} stream</span>
+          </div>
+          {showStream && (
+            <pre id="stream-content">{streamContent}</pre>
+          )}
+        </div>
+      )}
     </>
   )
 }

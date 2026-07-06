@@ -4,7 +4,7 @@ import SceneManager from '../three/SceneManager.js'
 import TreeManager from '../three/TreeManager.js'
 import TourController from '../three/TourController.js'
 
-export default function ThreeCanvas({ onTourStep, topics, positions, edges, speed }) {
+export default function ThreeCanvas({ onTourStep, topics, positions, edges, speed, onTimerTick }) {
   const containerRef = useRef(null)
 
   useEffect(() => {
@@ -36,6 +36,7 @@ export default function ThreeCanvas({ onTourStep, topics, positions, edges, spee
         if (tree.cards[h].expanded) { tree.deselectAll(); tourStepCallback(-1); return }
         tree.deselectAll()
         tree.cards[h].setExpanded(true)
+        tree.cards.forEach((c, i) => { if (i !== h) c.setDimmed(true) })
         tourStepCallback(h)
       } else {
         tree.deselectAll()
@@ -61,6 +62,7 @@ export default function ThreeCanvas({ onTourStep, topics, positions, edges, spee
       tree.updateMarkers(sm.animTime)
       tour.update(0.016)
       tree.updateRaycaster(raycaster, pointer, sm.camera)
+      if (onTimerTick && tour.active) onTimerTick(tour.getProgress())
       sm.render()
       animId = requestAnimationFrame(animate)
     }

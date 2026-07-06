@@ -147,3 +147,62 @@ cache_key = md5(domain.trim().toLowerCase()) + "_" + level
 - Multi-language TTS (Hindi, Spanish, etc.)
 - Collaborative share link
 - Upload PDF / URL instead of paste
+
+---
+
+## Future (v0.4+) — Dynamic Node Content Panel
+
+### Vision
+Transform each graph node into a **live content hub** during traversal. Replace the static CodePanel with a slide-out **Node Detail Panel** (right-side billboard) when a card is expanded.
+
+### Features
+
+| Feature | Description |
+|---------|-------------|
+| **Notes** | Per-node rich text editor, auto-saved to localStorage (`node-{id}-notes`) |
+| **Media Embeds** | URL input → auto-detect YouTube, Vimeo, FB posts, raw iframes → render inline |
+| **Chat** | Per-node local message buffer persisted in localStorage (`node-{id}-chat`) |
+| **Timer** | Countdown bar on the panel edge; controls tour auto-advance timeout |
+| **Tabs** | Notes / Media / Chat tab navigation inside the panel |
+
+### Data Layer
+```js
+// Additional per-node fields (stored in localStorage)
+nodeData[id] = {
+  notes: "markdown or plain text...",
+  media: [
+    { type: "youtube", url: "https://youtube.com/watch?v=..." },
+    { type: "iframe", html: "<iframe src='...'></iframe>" }
+  ],
+  chat: [
+    { user: "You", text: "message", ts: Date.now() }
+  ]
+}
+```
+
+### UI Layout
+```
+┌───────────────────────────────────────┐
+│           3D Graph (full screen)       │
+│                         ┌────────────┐│
+│                         │ Node Panel ││
+│                         │ ────────── ││
+│                         │ • Notes    ││
+│                         │ • Media    ││
+│                         │   embeds   ││
+│                         │ • Chat     ││
+│                         │ • Timer    ││
+│                         └────────────┘│
+│         [⚙ ⚡ 🧠 ▶]                   │
+└───────────────────────────────────────┘
+```
+
+### Files to Add / Modify
+| File | Change |
+|------|--------|
+| `src/components/NodePanel.jsx` | **New** — Slide-out billboard with tabs (Notes/Media/Chat) + Timer |
+| `src/components/NotesEditor.jsx` | **New** — Textarea per node with localStorage sync |
+| `src/components/MediaEmbed.jsx` | **New** — YouTube/iframe embed renderer |
+| `src/components/NodeChat.jsx` | **New** — Simple local message log per node |
+| `src/App.jsx` | Replace CodePanel with NodePanel; pass node data state |
+| `style.css` | Styles for slide panel, tabs, timer, chat bubbles |

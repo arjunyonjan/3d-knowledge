@@ -91,7 +91,7 @@ export default class TreeManager {
   }
 
   deselectAll() {
-    this.cards.forEach(c => c.setExpanded(false))
+    this.cards.forEach(c => { c.setExpanded(false); c.setDimmed(false) })
   }
 
   updateRaycaster(raycaster, pointer, camera) {
@@ -100,7 +100,7 @@ export default class TreeManager {
     const intersects = raycaster.intersectObjects(meshes)
 
     this.cards.forEach((c, i) => {
-      c.update()
+      c.update(camera.quaternion)
       if (c.expanded) return
       if (intersects.length && intersects[0].object === c.card) {
         if (this.hovered !== i) {

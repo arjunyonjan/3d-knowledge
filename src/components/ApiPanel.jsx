@@ -1,7 +1,7 @@
 import { useRef, useEffect } from 'preact/hooks'
 import { cacheClear } from '../utils/cache.js'
 
-export default function ApiPanel({ visible, onClose, onGenerate, apiKey, setApiKey, generating, setGenerating, setError, domain, onDomainChange }) {
+export default function ApiPanel({ visible, onClose, onGenerate, generating, setGenerating, setError, domain, onDomainChange }) {
   const panelRef = useRef(null)
   const dragRef = useRef({ dragging: false, startX: 0, startY: 0, left: 0, top: 0 })
 
@@ -12,7 +12,7 @@ export default function ApiPanel({ visible, onClose, onGenerate, apiKey, setApiK
     const d = dragRef.current
     el.style.left = ''; el.style.top = ''
     const onDown = (e) => {
-      if (e.target.closest('.api-textarea') || e.target.closest('.api-key-input') || e.target.closest('.api-actions')) return
+      if (e.target.closest('.api-textarea') || e.target.closest('.api-actions')) return
       d.dragging = true
       const pt = e.touches ? e.touches[0] : e
       d.startX = pt.clientX
@@ -80,17 +80,9 @@ export default function ApiPanel({ visible, onClose, onGenerate, apiKey, setApiK
         rows={6}
         disabled={generating}
       />
-      <input
-        class="api-key-input"
-        type="password"
-        placeholder="API key (optional — local dev only)"
-        value={apiKey}
-        onInput={(e) => setApiKey(e.target.value)}
-        disabled={generating}
-      />
       <div class="api-actions">
         <button class="api-btn primary" onClick={handleGenerate} disabled={generating}>
-          {generating ? 'Generating...' : 'Generate'}
+          {generating ? <span class="api-spinner" /> : 'Generate'}
         </button>
         <button class="api-btn" onClick={() => { cacheClear(); setError('Cache cleared') }}>Clear Cache</button>
       </div>

@@ -1,7 +1,5 @@
-import { TOPICS } from '../data/theme.js'
-
-export default function CodePanel({ step, visible }) {
-  const t = TOPICS[step]
+export default function CodePanel({ step, visible, topics }) {
+  const t = topics?.[step]
   if (!visible || !t) return null
   return (
     <div id="code-panel" class="visible">

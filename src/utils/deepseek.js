@@ -1,13 +1,17 @@
-export async function generateFromDomain(domain, level, apiKey) {
+export async function generateFromDomain(domain, level, apiKey, onChunk) {
   if (!domain.trim()) throw new Error('Domain text required')
 
   // Try Vercel serverless endpoint first (key stays server-side)
   try {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 5000)
     const res = await fetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ domain, level }),
+      signal: controller.signal,
     })
+    clearTimeout(timeout)
     if (res.ok) return await res.json()
     if (res.status !== 404) {
       const err = await res.json().catch(() => ({}))
@@ -17,8 +21,9 @@ export async function generateFromDomain(domain, level, apiKey) {
     if (!e.message?.includes('Server error') && !e.message?.includes('Failed to fetch')) throw e
   }
 
-  // Fallback: direct DeepSeek call (local dev with user-provided or env key)
-  if (!apiKey) throw new Error('API key required for local generation')
+  // Fallback: direct DeepSeek call (local dev)
+  if (!apiKey) apiKey = import.meta.env.VITE_DEEPSEEK_KEY || ''
+  if (!apiKey) throw new Error('API key not configured. Set VITE_DEEPSEEK_KEY in .env')
 
   const SYSTEM_PROMPTS = {
     child: `You are a knowledge graph builder for kids. Given the text below, extract 7-12 key concepts and arrange them in a pedagogical tree (0 = root, simplest concept). For each concept write:
@@ -51,30 +56,73 @@ Output ONLY valid JSON matching: { "topics": [{"id":0,"title":"...","explanation
 
   const prompt = SYSTEM_PROMPTS[level] || SYSTEM_PROMPTS.layman
 
-  const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: 'deepseek-chat',
-      messages: [
-        { role: 'system', content: prompt },
-        { role: 'user', content: `Here is the knowledge to organize:\n\n${domain}` },
-      ],
-      temperature: 0.3,
-      max_tokens: 4096,
-    }),
-  })
+  const dsController = new AbortController()
+  const dsTimeout = setTimeout(() => dsController.abort(), 25000)
 
-  if (!res.ok) {
-    const err = await res.text().catch(() => '')
-    throw new Error(`API error ${res.status}: ${err}`)
+  const body = {
+    model: 'deepseek-chat',
+    messages: [
+      { role: 'system', content: prompt },
+      { role: 'user', content: `Here is the knowledge to organize:\n\n${domain}` },
+    ],
+    temperature: 0,
+    max_tokens: 4096,
   }
 
-  const json = await res.json()
-  const raw = json.choices?.[0]?.message?.content || ''
+  let raw
+
+  if (onChunk) {
+    body.stream = true
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      body: JSON.stringify(body),
+      signal: dsController.signal,
+    })
+    clearTimeout(dsTimeout)
+    if (!res.ok) {
+      const err = await res.text().catch(() => '')
+      throw new Error(`API error ${res.status}: ${err}`)
+    }
+    raw = ''
+    const reader = res.body.getReader()
+    const decoder = new TextDecoder()
+    let buf = ''
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buf += decoder.decode(value, { stream: true })
+      const lines = buf.split('\n')
+      buf = lines.pop() || ''
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue
+        const data = line.slice(6)
+        if (data === '[DONE]') break
+        try {
+          const ev = JSON.parse(data)
+          const delta = ev.choices?.[0]?.delta?.content || ''
+          if (delta) {
+            raw += delta
+            onChunk(raw)
+          }
+        } catch {}
+      }
+    }
+  } else {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      body: JSON.stringify(body),
+      signal: dsController.signal,
+    })
+    clearTimeout(dsTimeout)
+    if (!res.ok) {
+      const err = await res.text().catch(() => '')
+      throw new Error(`API error ${res.status}: ${err}`)
+    }
+    const json = await res.json()
+    raw = json.choices?.[0]?.message?.content || ''
+  }
 
   let parsed
   try {
