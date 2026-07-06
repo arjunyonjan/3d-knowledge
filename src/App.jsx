@@ -24,7 +24,7 @@ export default function App() {
   const [positions, setPositions] = useState(DEFAULT_POSITIONS)
   const [edges, setEdges] = useState(DEFAULT_EDGES)
 
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem('w06_api_key') || '')
+  const [apiKey, setApiKey] = useState(() => import.meta.env.VITE_DEEPSEEK_KEY || localStorage.getItem('w06_api_key') || '')
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState('')
   const [currentDomain, setCurrentDomain] = useState('')
