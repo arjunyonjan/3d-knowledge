@@ -235,6 +235,19 @@ canvas { display: block; }
 }
 .tb-start:hover { background: rgba(0,255,170,0.2); box-shadow: 0 0 20px rgba(0,255,170,0.15); }
 
+@media (max-width: 500px) {
+  #toolbar {
+    gap: 6px; padding: 6px 10px; flex-wrap: wrap; justify-content: center; width: 94vw;
+    bottom: 70px; border-radius: 8px;
+  }
+  .tb-section { gap: 2px; }
+  .tb-chip { padding: 1px 5px; font-size: 9px; }
+  .tb-label { font-size: 9px; }
+  .tb-start { font-size: 10px; padding: 3px 10px; }
+  .tb-divider { height: 14px; }
+  .tb-config { padding: 1px 6px; }
+}
+
 /* ── Api Panel ── */
 #api-panel {
   position: fixed;
