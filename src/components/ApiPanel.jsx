@@ -1,6 +1,5 @@
 import { useRef, useEffect } from 'preact/hooks'
 import { cacheClear } from '../utils/cache.js'
-import { generateFromDomain } from '../utils/deepseek.js'
 
 export default function ApiPanel({ visible, onClose, onGenerate, apiKey, setApiKey, generating, setGenerating, setError, domain, onDomainChange }) {
   const panelRef = useRef(null)
@@ -56,7 +55,6 @@ export default function ApiPanel({ visible, onClose, onGenerate, apiKey, setApiK
 
   const handleGenerate = async () => {
     if (!domain.trim()) { setError('Paste some knowledge first'); return }
-    if (!apiKey.trim()) { setError('Enter your DeepSeek API key'); return }
     setGenerating(true)
     setError('')
     try {
@@ -85,7 +83,7 @@ export default function ApiPanel({ visible, onClose, onGenerate, apiKey, setApiK
       <input
         class="api-key-input"
         type="password"
-        placeholder="sk-... (DeepSeek API key)"
+        placeholder="API key (optional — local dev only)"
         value={apiKey}
         onInput={(e) => setApiKey(e.target.value)}
         disabled={generating}
